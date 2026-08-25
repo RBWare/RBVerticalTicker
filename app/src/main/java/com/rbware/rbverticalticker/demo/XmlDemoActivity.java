@@ -2,6 +2,7 @@ package com.rbware.rbverticalticker.demo;
 
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import com.rbware.rbverticalticker.VerticalTickerView;
 import java.util.Arrays;
@@ -17,6 +18,8 @@ public class XmlDemoActivity extends AppCompatActivity {
             "Drop it into any screen"
     );
 
+    private int advanceCount = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -24,6 +27,12 @@ public class XmlDemoActivity extends AppCompatActivity {
 
         VerticalTickerView ticker = findViewById(R.id.ticker);
         ticker.setItems(HEADLINES);
+
+        TextView listenerLog = findViewById(R.id.listenerLog);
+        ticker.setOnItemShownListener(item -> {
+            advanceCount++;
+            listenerLog.setText("Listener fired " + advanceCount + " time(s) - last: \"" + item + "\"");
+        });
 
         Button nextButton = findViewById(R.id.nextButton);
         nextButton.setOnClickListener(v -> ticker.showNext());

@@ -1,5 +1,6 @@
 package com.rbware.rbverticalticker
 
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -24,6 +25,11 @@ import androidx.compose.ui.text.style.TextOverflow
 @ConsistentCopyVisibility
 data class TickerEntry internal constructor(val id: Int, val text: String)
 
+/** Notified with the newly shown item each time a [VerticalTickerState] advances. */
+fun interface OnItemShownListener {
+    fun onItemShown(item: String)
+}
+
 /**
  * Hoisted state for a [VerticalTicker]. Create with [rememberVerticalTickerState] and drive it
  * with [showNext].
@@ -42,9 +48,18 @@ class VerticalTickerState internal constructor(private val items: List<String>) 
         private set
 
     private var nextId = 0
+    private var listener: OnItemShownListener? = null
 
     init {
         items.firstOrNull()?.let(::push)
+    }
+
+    /**
+     * Registers [listener] to be called with the newly shown item every time [showNext] runs,
+     * e.g. so other UI outside the ticker can update in step. Pass `null` to remove it.
+     */
+    fun setOnItemShownListener(listener: OnItemShownListener?) {
+        this.listener = listener
     }
 
     /** Advances to the next entry in the [items] list passed to [rememberVerticalTickerState], wrapping around at the end. */
@@ -64,6 +79,7 @@ class VerticalTickerState internal constructor(private val items: List<String>) 
         if (_history.size > HISTORY_LIMIT) {
             _history.removeAt(0)
         }
+        listener?.onItemShown(text)
     }
 
     private companion object {
@@ -88,6 +104,7 @@ fun rememberVerticalTickerState(items: List<String>): VerticalTickerState =
  * @param topFadeAlpha opacity, from 0 (fully transparent) to 1 (fully opaque, the default), applied
  * to the top edge of the ticker; it ramps linearly up to full opacity at the bottom edge, so older
  * rows appear to fade away as newer ones arrive. 1f disables the effect entirely.
+ * @param animationDurationMillis how long each row's shift/fade transition takes when [state] advances.
  * @param itemContent how to render a single item; defaults to a single line of [MaterialTheme] text.
  */
 @Composable
@@ -96,10 +113,12 @@ fun VerticalTicker(
     modifier: Modifier = Modifier,
     visibleCount: Int = 1,
     topFadeAlpha: Float = 1f,
+    animationDurationMillis: Int = 300,
     itemContent: @Composable (String) -> Unit = { DefaultTickerItem(it) },
 ) {
     require(visibleCount >= 1) { "visibleCount must be at least 1, was $visibleCount" }
     require(topFadeAlpha in 0f..1f) { "topFadeAlpha must be between 0 and 1, was $topFadeAlpha" }
+    require(animationDurationMillis >= 0) { "animationDurationMillis must be at least 0, was $animationDurationMillis" }
 
     val realEntries = state.history.takeLast(visibleCount)
     val placeholderCount = visibleCount - realEntries.size
@@ -111,7 +130,13 @@ fun VerticalTicker(
         userScrollEnabled = false,
     ) {
         items(slots, key = { it.key }) { slot ->
-            Box(modifier = Modifier.animateItem()) {
+            Box(
+                modifier = Modifier.animateItem(
+                    fadeInSpec = tween(durationMillis = animationDurationMillis),
+                    placementSpec = tween(durationMillis = animationDurationMillis),
+                    fadeOutSpec = tween(durationMillis = animationDurationMillis),
+                ),
+            ) {
                 itemContent(slot.text)
             }
         }

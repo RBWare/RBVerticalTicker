@@ -5,6 +5,12 @@ plugins {
     `maven-publish`
 }
 
+// JitPack (and `./gradlew publish -Pversion=1.2.3`) sets `version` via the `-Pversion` project
+// property before this script runs; only fall back to a literal when nothing else provided one.
+if (version == Project.DEFAULT_VERSION) {
+    version = "0.1.0"
+}
+
 android {
     namespace = "com.rbware.rbverticalticker"
     compileSdk {
@@ -69,7 +75,7 @@ publishing {
         register<MavenPublication>("release") {
             groupId = "com.rbware"
             artifactId = "verticalticker"
-            version = "0.1.0"
+            version = project.version.toString()
 
             afterEvaluate {
                 from(components["release"])

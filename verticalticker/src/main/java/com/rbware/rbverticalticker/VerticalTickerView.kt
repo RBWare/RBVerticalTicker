@@ -30,7 +30,8 @@ import androidx.compose.ui.viewinterop.AndroidView
  *     android:textColor="@color/ticker_text"
  *     android:fontFamily="sans-serif-medium"
  *     app:visibleCount="3"
- *     app:topFadeAlpha="0.2" />
+ *     app:topFadeAlpha="0.2"
+ *     app:animationDurationMillis="300" />
  * ```
  * Each visible row is rendered with a real [TextView], so its font size, color, style, and
  * family are the same [TextView] properties you'd set on any other text view - via the XML
@@ -46,10 +47,12 @@ class VerticalTickerView @JvmOverloads constructor(
 
     var visibleCount: Int by mutableIntStateOf(1)
     var topFadeAlpha: Float by mutableFloatStateOf(1f)
+    var animationDurationMillis: Int by mutableIntStateOf(300)
 
     private var textSizePx: Float by mutableStateOf(spToPx(16f))
     private var rowTextColor: Int by mutableStateOf(DEFAULT_TEXT_COLOR)
     private var rowTypeface: Typeface by mutableStateOf(Typeface.DEFAULT)
+    private var itemShownListener: OnItemShownListener? = null
 
     init {
         attrs?.let { applyAttributeSet(it, defStyleAttr) }
@@ -60,6 +63,10 @@ class VerticalTickerView @JvmOverloads constructor(
         try {
             visibleCount = typedArray.getInt(R.styleable.VerticalTickerView_visibleCount, visibleCount)
             topFadeAlpha = typedArray.getFloat(R.styleable.VerticalTickerView_topFadeAlpha, topFadeAlpha)
+            animationDurationMillis = typedArray.getInt(
+                R.styleable.VerticalTickerView_animationDurationMillis,
+                animationDurationMillis,
+            )
             textSizePx = typedArray.getDimension(R.styleable.VerticalTickerView_android_textSize, textSizePx)
             rowTextColor = typedArray.getColor(R.styleable.VerticalTickerView_android_textColor, rowTextColor)
             val style = typedArray.getInt(R.styleable.VerticalTickerView_android_textStyle, Typeface.NORMAL)
@@ -89,7 +96,16 @@ class VerticalTickerView @JvmOverloads constructor(
 
     /** Replaces the rotation with [items]; resets any prior history, matching [rememberVerticalTickerState]. */
     fun setItems(items: List<String>) {
-        tickerState = VerticalTickerState(items)
+        tickerState = VerticalTickerState(items).also { it.setOnItemShownListener(itemShownListener) }
+    }
+
+    /**
+     * Registers [listener] to be called with the newly shown item every time [showNext] runs,
+     * e.g. so other views on screen can update in step. Pass `null` to remove it.
+     */
+    fun setOnItemShownListener(listener: OnItemShownListener?) {
+        itemShownListener = listener
+        tickerState.setOnItemShownListener(listener)
     }
 
     /** See [VerticalTickerState.showNext]. */
@@ -120,6 +136,7 @@ class VerticalTickerView @JvmOverloads constructor(
             modifier = Modifier.fillMaxWidth(),
             visibleCount = visibleCount,
             topFadeAlpha = topFadeAlpha,
+            animationDurationMillis = animationDurationMillis,
         ) { text ->
             AndroidView(
                 modifier = Modifier.fillMaxWidth(),

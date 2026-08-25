@@ -17,6 +17,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -74,7 +80,28 @@ private fun DemoScreen() {
                     modifier = Modifier.padding(top = 8.dp, bottom = 24.dp),
                 )
                 val tickerState = rememberVerticalTickerState(sampleHeadlines)
-                VerticalTicker(state = tickerState, visibleCount = 3, topFadeAlpha = 0.15f)
+                VerticalTicker(
+                    state = tickerState,
+                    visibleCount = 3,
+                    topFadeAlpha = 0.15f,
+                    animationDurationMillis = 900,
+                )
+
+                var advanceCount by remember { mutableIntStateOf(0) }
+                var lastShownViaListener by remember { mutableStateOf("") }
+                DisposableEffect(tickerState) {
+                    tickerState.setOnItemShownListener { item ->
+                        advanceCount++
+                        lastShownViaListener = item
+                    }
+                    onDispose { tickerState.setOnItemShownListener(null) }
+                }
+                Text(
+                    text = "Listener fired $advanceCount time(s) - last: \"$lastShownViaListener\"",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 12.dp),
+                )
+
                 Row(
                     modifier = Modifier.padding(top = 24.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),

@@ -7,5 +7,6 @@
         <attr name="android:fontFamily" />
         <attr name="visibleCount" format="integer" />
         <attr name="topFadeAlpha" format="float" />
+        <attr name="animationDurationMillis" format="integer" />
     </declare-styleable>
 </resources>

@@ -30,7 +30,16 @@
         android:textStyle="bold"
         android:fontFamily="serif"
         app:visibleCount="3"
-        app:topFadeAlpha="0.15" />
+        app:topFadeAlpha="0.15"
+        app:animationDurationMillis="900" />
+
+    <TextView
+        android:id="@+id/listenerLog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:textSize="12sp"
+        android:text="Listener fired 0 time(s)" />
 
     <LinearLayout
         android:layout_width="wrap_content"
