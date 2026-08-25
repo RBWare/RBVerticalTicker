@@ -1,5 +1,6 @@
 package com.rbware.rbverticalticker
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.lazy.LazyColumn
@@ -7,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
@@ -17,7 +19,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 
 /**
  * A single entry that has been shown on a [VerticalTicker], oldest first.
@@ -125,23 +129,34 @@ fun VerticalTicker(
     val slots = List(placeholderCount) { index -> TickerSlot(key = index - placeholderCount, text = "") } +
         realEntries.map { TickerSlot(key = it.id, text = it.text) }
 
+    val slideDistancePx = with(LocalDensity.current) { ROW_SLIDE_IN_DISTANCE.toPx() }
+
     LazyColumn(
         modifier = modifier.then(if (topFadeAlpha < 1f) Modifier.topFade(topFadeAlpha) else Modifier),
         userScrollEnabled = false,
     ) {
         items(slots, key = { it.key }) { slot ->
+            val slideInOffset = remember(slot.key) { Animatable(slideDistancePx) }
+            LaunchedEffect(slot.key) {
+                slideInOffset.animateTo(0f, animationSpec = tween(durationMillis = animationDurationMillis))
+            }
             Box(
-                modifier = Modifier.animateItem(
-                    fadeInSpec = tween(durationMillis = animationDurationMillis),
-                    placementSpec = tween(durationMillis = animationDurationMillis),
-                    fadeOutSpec = tween(durationMillis = animationDurationMillis),
-                ),
+                modifier = Modifier
+                    .animateItem(
+                        fadeInSpec = tween(durationMillis = animationDurationMillis),
+                        placementSpec = tween(durationMillis = animationDurationMillis),
+                        fadeOutSpec = tween(durationMillis = animationDurationMillis),
+                    )
+                    .graphicsLayer { translationY = slideInOffset.value },
             ) {
                 itemContent(slot.text)
             }
         }
     }
 }
+
+/** How far a newly shown row slides up from below into its final position. */
+private val ROW_SLIDE_IN_DISTANCE = 24.dp
 
 /** Masks the drawn content's alpha with a vertical gradient, from [topAlpha] at the top to fully opaque at the bottom. */
 private fun Modifier.topFade(topAlpha: Float): Modifier =
