@@ -29,6 +29,8 @@
         android:textColor="#6750A4"
         android:textStyle="bold"
         android:fontFamily="serif"
+        android:gravity="start"
+        android:maxLines="2"
         app:visibleCount="3"
         app:topFadeAlpha="0.15"
         app:animationDurationMillis="900" />

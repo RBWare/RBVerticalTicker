@@ -38,6 +38,7 @@ public class XmlDemoActivity extends AppCompatActivity {
         nextButton.setOnClickListener(v -> ticker.showNext());
 
         Button injectButton = findViewById(R.id.injectButton);
-        injectButton.setOnClickListener(v -> ticker.showNext("Breaking: manual entry injected!"));
+        injectButton.setOnClickListener(v -> ticker.showNext(
+                "Breaking: this manually injected entry is long enough that it should wrap onto a second line"));
     }
 }

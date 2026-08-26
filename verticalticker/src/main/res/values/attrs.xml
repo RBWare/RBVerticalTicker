@@ -5,6 +5,8 @@
         <attr name="android:textColor" />
         <attr name="android:textStyle" />
         <attr name="android:fontFamily" />
+        <attr name="android:gravity" />
+        <attr name="android:maxLines" />
         <attr name="visibleCount" format="integer" />
         <attr name="topFadeAlpha" format="float" />
         <attr name="animationDurationMillis" format="integer" />

@@ -29,13 +29,16 @@ import androidx.compose.ui.viewinterop.AndroidView
  *     android:textSize="18sp"
  *     android:textColor="@color/ticker_text"
  *     android:fontFamily="sans-serif-medium"
+ *     android:gravity="start"
+ *     android:maxLines="2"
  *     app:visibleCount="3"
  *     app:topFadeAlpha="0.2"
  *     app:animationDurationMillis="300" />
  * ```
- * Each visible row is rendered with a real [TextView], so its font size, color, style, and
- * family are the same [TextView] properties you'd set on any other text view - via the XML
- * attributes above, or imperatively with [setTextSize], [setTextColor], and [setTypeface].
+ * Each visible row is rendered with a real [TextView], so its font size, color, style, family,
+ * alignment, and line-wrapping behavior are the same [TextView] properties you'd set on any other
+ * text view - via the XML attributes above, or imperatively with [setTextSize], [setTextColor],
+ * [setTypeface], [setGravity], and [setMaxLines].
  */
 class VerticalTickerView @JvmOverloads constructor(
     context: Context,
@@ -52,6 +55,8 @@ class VerticalTickerView @JvmOverloads constructor(
     private var textSizePx: Float by mutableStateOf(spToPx(16f))
     private var rowTextColor: Int by mutableStateOf(DEFAULT_TEXT_COLOR)
     private var rowTypeface: Typeface by mutableStateOf(Typeface.DEFAULT)
+    private var rowGravity: Int by mutableIntStateOf(Gravity.CENTER)
+    private var rowMaxLines: Int by mutableIntStateOf(1)
     private var itemShownListener: OnItemShownListener? = null
 
     init {
@@ -72,6 +77,8 @@ class VerticalTickerView @JvmOverloads constructor(
             val style = typedArray.getInt(R.styleable.VerticalTickerView_android_textStyle, Typeface.NORMAL)
             val family = resolveFontFamily(typedArray)
             rowTypeface = Typeface.create(family ?: Typeface.DEFAULT, style)
+            rowGravity = typedArray.getInt(R.styleable.VerticalTickerView_android_gravity, rowGravity)
+            rowMaxLines = typedArray.getInt(R.styleable.VerticalTickerView_android_maxLines, rowMaxLines)
         } finally {
             typedArray.recycle()
         }
@@ -129,6 +136,19 @@ class VerticalTickerView @JvmOverloads constructor(
         rowTypeface = typeface ?: Typeface.DEFAULT
     }
 
+    /** Sets the alignment of each row's text, matching [TextView.setGravity]. Defaults to [Gravity.CENTER]. */
+    fun setGravity(gravity: Int) {
+        rowGravity = gravity
+    }
+
+    /**
+     * Sets how many lines each row's text may wrap across before it's ellipsized, matching
+     * [TextView.setMaxLines]. Defaults to 1 (single line, ellipsized at the end).
+     */
+    fun setMaxLines(maxLines: Int) {
+        rowMaxLines = maxLines
+    }
+
     @Composable
     override fun Content() {
         VerticalTicker(
@@ -140,13 +160,14 @@ class VerticalTickerView @JvmOverloads constructor(
         ) { text ->
             AndroidView(
                 modifier = Modifier.fillMaxWidth(),
-                factory = { ctx -> TextView(ctx).apply { gravity = Gravity.CENTER } },
+                factory = { ctx -> TextView(ctx) },
                 update = { textView ->
                     textView.text = text
                     textView.setTextColor(rowTextColor)
                     textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, textSizePx)
                     textView.typeface = rowTypeface
-                    textView.maxLines = 1
+                    textView.gravity = rowGravity
+                    textView.maxLines = rowMaxLines
                     textView.ellipsize = TextUtils.TruncateAt.END
                 },
             )
