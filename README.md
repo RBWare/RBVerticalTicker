@@ -20,7 +20,7 @@ dependencyResolutionManagement {
 ```kotlin
 // app/build.gradle.kts
 dependencies {
-    implementation("com.github.RBWare:RBVerticalTicker:<version>")
+    implementation("com.github.rbware:verticalticker:<version>")
 }
 ```
 

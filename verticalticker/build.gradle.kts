@@ -5,8 +5,12 @@ plugins {
     `maven-publish`
 }
 
-// JitPack (and `./gradlew publish -Pversion=1.2.3`) sets `version` via the `-Pversion` project
-// property before this script runs; only fall back to a literal when nothing else provided one.
+// JitPack (and `./gradlew publish -Pgroup=... -Pversion=...`) passes `group`/`version` as project
+// properties before this script runs. Gradle's own default for an unset subproject `group` is the
+// *root project's name*, not blank, so check the raw property directly rather than `group.toString()`.
+// JitPack also passes the GitHub org's literal casing (e.g. "com.github.RBWare") - Maven group ids
+// are conventionally all lowercase, so normalize whatever we end up with.
+group = providers.gradleProperty("group").orNull?.lowercase() ?: "com.rbware"
 if (version == Project.DEFAULT_VERSION) {
     version = "0.1.0"
 }
@@ -73,7 +77,7 @@ dependencies {
 publishing {
     publications {
         register<MavenPublication>("release") {
-            groupId = "com.rbware"
+            groupId = project.group.toString()
             artifactId = "verticalticker"
             version = project.version.toString()
 
